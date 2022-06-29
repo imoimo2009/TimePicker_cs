@@ -81,8 +81,7 @@ namespace TimePicker
         private const string PensColor_RLINE = "#AAAADD";
 
         // 変数定義
-        private int X;
-        private int Y;
+        private int X,Y;
         private bool Clicked;
         private eMode Mode;
         private PointF DrawScale;
@@ -93,8 +92,7 @@ namespace TimePicker
         private Bitmap Bmp;
         private Graphics Gp;
         private StringFormat Format;
-        private Font ClkFont;
-        private Font ClkFont2;
+        private Font ClkFont,ClkFont2;
 
         // プロパティ定義
         public int Hour { get; private set; }
@@ -181,22 +179,22 @@ namespace TimePicker
         {
             // 変数定義
             int r,s,f = BaseSize;
-            double rad, d;
+            double rad,d;
             Font fnt;
-            Point c = this.Center,a;
+            Point a,c = this.Center;
             Graphics g = this.Gp;
-            Size rect = this.Bmp.Size;
+            Size sz = this.Bmp.Size;
             List<object[]> cell = new List<object[]>();
             SolidBrush bh, bm,b = this.Brushes[(int)eBrush.BG];
             Rectangle dr = DigitalRect;
 
             // 背景
-            g.FillRectangle(b, 0,BGRadius, rect.Width, rect.Height - BGRadiusx2);
-            g.FillRectangle(b, BGRadius, 0, rect.Width - BGRadiusx2, rect.Height);
+            g.FillRectangle(b, 0,BGRadius, sz.Width, sz.Height - BGRadiusx2);
+            g.FillRectangle(b, BGRadius, 0, sz.Width - BGRadiusx2, sz.Height);
             g.FillPie(b, 0, 0, BGRadiusx2, BGRadiusx2, BGLeftTopDeg, 90);
-            g.FillPie(b, rect.Width - BGRadiusx2, 0, BGRadiusx2, BGRadiusx2, BGRightTopDeg, 90);
-            g.FillPie(b, 0, rect.Height - BGRadiusx2, BGRadiusx2, BGRadiusx2, BGLeftBottomDeg, 90);
-            g.FillPie(b, rect.Width - BGRadiusx2, rect.Height - BGRadiusx2, BGRadiusx2, BGRadiusx2, BGRrightBottomDeg, 90);
+            g.FillPie(b, sz.Width - BGRadiusx2, 0, BGRadiusx2, BGRadiusx2, BGRightTopDeg, 90);
+            g.FillPie(b, 0, sz.Height - BGRadiusx2, BGRadiusx2, BGRadiusx2, BGLeftBottomDeg, 90);
+            g.FillPie(b, sz.Width - BGRadiusx2, sz.Height - BGRadiusx2, BGRadiusx2, BGRadiusx2, BGRrightBottomDeg, 90);
             // アナログ部
             g.FillPie(this.Brushes[(int)eBrush.BASE], c.X - f / 2, c.Y - f / 2, f, f, 0, 360);
             if (this.Mode == 0) {
