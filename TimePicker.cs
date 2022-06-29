@@ -50,6 +50,12 @@ namespace TimePicker
         private const int BitmapHeight = 960;
         private const int CenterLeft = 400;
         private const int CenterTop = 560;
+        private const int BGRadius = 32;
+        private const int BGRadiusx2 = BGRadius * 2;
+        private const int BGLeftTopDeg = 180;
+        private const int BGRightTopDeg = 270;
+        private const int BGLeftBottomDeg = 90;
+        private const int BGRrightBottomDeg = 0;
         private const int DigitalLeft = 200;
         private const int DigitalTop = 40;
         private const int DigitalWidth = 400;
@@ -185,12 +191,12 @@ namespace TimePicker
             Rectangle dr = DigitalRect;
 
             // 背景
-            g.FillRectangle(b, 0, 32, rect.Width, rect.Height - 64);
-            g.FillRectangle(b, 32, 0, rect.Width - 64, rect.Height);
-            g.FillPie(b, 0, 0, 64, 64, 720, 360);
-            g.FillPie(b, rect.Width - 64, 0, 64, 64, 270, 90);
-            g.FillPie(b, 0, rect.Height - 64, 64, 64, 90, 90);
-            g.FillPie(b, rect.Width - 64, rect.Height - 64, 64, 64, 0, 90);
+            g.FillRectangle(b, 0,BGRadius, rect.Width, rect.Height - BGRadiusx2);
+            g.FillRectangle(b, BGRadius, 0, rect.Width - BGRadiusx2, rect.Height);
+            g.FillPie(b, 0, 0, BGRadiusx2, BGRadiusx2, BGLeftTopDeg, 90);
+            g.FillPie(b, rect.Width - BGRadiusx2, 0, BGRadiusx2, BGRadiusx2, BGRightTopDeg, 90);
+            g.FillPie(b, 0, rect.Height - BGRadiusx2, BGRadiusx2, BGRadiusx2, BGLeftBottomDeg, 90);
+            g.FillPie(b, rect.Width - BGRadiusx2, rect.Height - BGRadiusx2, BGRadiusx2, BGRadiusx2, BGRrightBottomDeg, 90);
             // アナログ部
             g.FillPie(this.Brushes[(int)eBrush.BASE], c.X - f / 2, c.Y - f / 2, f, f, 0, 360);
             if (this.Mode == 0) {
