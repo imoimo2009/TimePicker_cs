@@ -14,6 +14,35 @@ namespace TimePicker
             Minute
         }
 
+        // ブラシインデックスの列挙体
+        enum eBrush
+        {
+            BG,
+            BASE,
+            CELL,
+            SCELL,
+            RCELL
+        }
+
+        // ペンインデックスの列挙体
+        enum ePen
+        {
+            SLINE,
+            RLINE
+        }
+
+        // 選択カーソルパラメータインデックスの列挙体
+        enum eCell
+        {
+            Radian,
+            Radius,
+            Size,
+            Font,
+            Brush,
+            Pen,
+            Value
+        }
+
         // 定数定義
         private const int DefaultWidth = 200;
         private const int DefaultHeight = 240;
@@ -30,6 +59,20 @@ namespace TimePicker
         private const int ValueRadius = 292;
         private const int ValueSize2 = 88;
         private const int ValueRadius2 = 188;
+        private const string ClkFontName = "ＭＳ　ゴシック";
+        private const int ClkFontSise = 48;
+        private const int ClkFontSise2 = 36;
+        private const string DigitalFontName = "ＭＳ　ゴシック";
+        private const int DigitalFontSise = 80;
+        private const int LineWidth = 8;
+        private const string ClkFormat = "D2";
+        private const string BrushesColor_BG = "#AAAAFF";
+        private const string BrushesColor_BASE = "#4444AA";
+        private const string BrushesColor_CELL = "#6666CC";
+        private const string BrushesColor_SCELL = "#FFFFFF";
+        private const string BrushesColor_RCELL = "#AAAADD";
+        private const string PensColor_SLINE = "#FFFFFF";
+        private const string PensColor_RLINE = "#AAAADD";
 
         // 変数定義
         private int X;
@@ -39,8 +82,8 @@ namespace TimePicker
         private PointF DrawScale;
         private Point Center;
         private Rectangle DigitalRect;
-        private Dictionary<string, SolidBrush> Brushes;
-        private Dictionary<string, Pen> Pens;
+        private SolidBrush[] Brushes;
+        private Pen[] Pens;
         private Bitmap Bmp;
         private Graphics Gp;
         private StringFormat Format;
@@ -89,35 +132,35 @@ namespace TimePicker
             this.Y = 0;
             this.Center = new Point(CenterLeft, CenterTop); // 原点
             this.DigitalRect = new Rectangle(DigitalLeft, DigitalTop, DigitalWidth, DigitalHeight); //デジタル部矩形
-            this.Brushes = new Dictionary<string, SolidBrush>() // ブラシをあらかじめ作成しておく
+            this.Brushes = new SolidBrush[] // ブラシをあらかじめ作成しておく
             {
-                ["BG"] = new SolidBrush(ColorTranslator.FromHtml("#AAAAFF")),
-                ["BASE"] = new SolidBrush(ColorTranslator.FromHtml("#4444AA")),
-                ["CELL"] = new SolidBrush(ColorTranslator.FromHtml("#6666CC")),
-                ["SCELL"] = new SolidBrush(ColorTranslator.FromHtml("#FFFFFF")),
-                ["RCELL"] = new SolidBrush(ColorTranslator.FromHtml("#AAAADD"))
+                new SolidBrush(ColorTranslator.FromHtml(BrushesColor_BG)),
+                new SolidBrush(ColorTranslator.FromHtml(BrushesColor_BASE)),
+                new SolidBrush(ColorTranslator.FromHtml(BrushesColor_CELL)),
+                new SolidBrush(ColorTranslator.FromHtml(BrushesColor_SCELL)),
+                new SolidBrush(ColorTranslator.FromHtml(BrushesColor_RCELL))
             };
-            this.Pens = new Dictionary<string, Pen>() // ペンをあらかじめ作成しておく
+            this.Pens = new Pen[] // ペンをあらかじめ作成しておく
             {
-                ["SLINE"] = new Pen(ColorTranslator.FromHtml("#FFFFFF")),
-                ["RLINE"] = new Pen(ColorTranslator.FromHtml("#AAAADD"))
+                new Pen(ColorTranslator.FromHtml(PensColor_SLINE)),
+                new Pen(ColorTranslator.FromHtml(PensColor_RLINE))
             };
-            this.Pens["SLINE"].Width = 8;
-            this.Pens["RLINE"].Width = 8;
+            this.Pens[(int)ePen.SLINE].Width = LineWidth;
+            this.Pens[(int)ePen.RLINE].Width = LineWidth;
             this.Bmp = new Bitmap(BitmapWidth, BitmapHeight); // レンダリング用ビットマップオブジェクト
             this.Gp = Graphics.FromImage(this.Bmp); // ビットマップからGraphicオブジェクトを作成しておく
             this.Format = new StringFormat(); // DrawStringに指定する文字配置
             this.Format.Alignment = StringAlignment.Center;
             this.Format.LineAlignment = StringAlignment.Center;
-            this.ClkFont = new Font("ＭＳ　ゴシック", 48, FontStyle.Bold); // 時計盤用フォント（外側）
-            this.ClkFont2 = new Font("ＭＳ　ゴシック", 36, FontStyle.Regular); // 時計盤用フォント（内側）
+            this.ClkFont = new Font(ClkFontName, ClkFontSise, FontStyle.Bold); // 時計盤用フォント（外側）
+            this.ClkFont2 = new Font(ClkFontName, ClkFontSise2, FontStyle.Regular); // 時計盤用フォント（内側）
             this.DrawScale = this.GetScale(width, height, BitmapWidth, BitmapHeight); // UIとビットマップの拡大率
             this.Mode = eMode.Hour; // 時間入力モードに設定
             // PictureBox初期化
             this.Size = new Size(width, height);
             this.BorderStyle = BorderStyle.None;
             this.BackColor = Color.Transparent;
-            this.Font = new Font("ＭＳ　ゴシック", 80, FontStyle.Bold);
+            this.Font = new Font(DigitalFontName,DigitalFontSise, FontStyle.Bold);
             this.SizeMode = PictureBoxSizeMode.StretchImage;
             // イベントハンドラ登録
             this.Paint += TimePicker_Paint;
@@ -137,8 +180,8 @@ namespace TimePicker
             Point c = this.Center,a;
             Graphics g = this.Gp;
             Size rect = this.Bmp.Size;
-            List<object> cell = new List<object>();
-            SolidBrush bh, bm,b = this.Brushes["BG"];
+            List<object[]> cell = new List<object[]>();
+            SolidBrush bh, bm,b = this.Brushes[(int)eBrush.BG];
             Rectangle dr = DigitalRect;
 
             // 背景
@@ -149,7 +192,7 @@ namespace TimePicker
             g.FillPie(b, 0, rect.Height - 64, 64, 64, 90, 90);
             g.FillPie(b, rect.Width - 64, rect.Height - 64, 64, 64, 0, 90);
             // アナログ部
-            g.FillPie(this.Brushes["BASE"], c.X - f / 2, c.Y - f / 2, f, f, 0, 360);
+            g.FillPie(this.Brushes[(int)eBrush.BASE], c.X - f / 2, c.Y - f / 2, f, f, 0, 360);
             if (this.Mode == 0) {
                 // 時間入力モード
                 for (int i = 23; i >= 0; i--)
@@ -174,15 +217,9 @@ namespace TimePicker
                     if (d <= s / 2) // 時間表示の円の内側にマウスカーソルがあるとき
                     {
                         // 選択カーソルを追加（マウス追随）
-                        cell.Add(new Dictionary<string, object>()
+                        cell.Add(new object[]
                         {
-                            ["radian"] = rad,
-                            ["radius"] = r,
-                            ["size"] = s,
-                            ["font"] = fnt,
-                            ["brush"] = Brushes["SCELL"],
-                            ["pen"] = Pens["SLINE"],
-                            ["value"] = i.ToString("D2")
+                            rad,r,s,fnt,Brushes[(int)eBrush.SCELL],Pens[(int)ePen.SLINE],i.ToString(ClkFormat)
                         });
                         // クリックされていたら現在の時間を選択する
                         if (this.Clicked)
@@ -193,24 +230,18 @@ namespace TimePicker
                     else if (i == this.Hour) // 表示時間が選択時間と同じ場合
                     {
                         // 選択カーソルを追加（選択済時間表示）
-                        cell.Add(new Dictionary<string, object>()
+                        cell.Add(new object[]
                         {
-                            ["radian"] = rad,
-                            ["radius"] = r,
-                            ["size"] = s,
-                            ["font"] = fnt,
-                            ["brush"] = Brushes["RCELL"],
-                            ["pen"] = Pens["RLINE"],
-                            ["value"] = i.ToString("D2")
+                            rad,r,s,fnt,Brushes[(int)eBrush.RCELL],Pens[(int)ePen.RLINE],i.ToString(ClkFormat)
                         });
                     }
                     // 時間の描画
-                    g.FillPie(Brushes["CELL"], a.X - s / 2, a.Y - s / 2, s, s, 0, 360);
-                    g.DrawString(i.ToString("D2"), fnt, this.Brushes["BASE"], a.X, a.Y, this.Format);
+                    g.FillPie(Brushes[(int)eBrush.CELL], a.X - s / 2, a.Y - s / 2, s, s, 0, 360);
+                    g.DrawString(i.ToString(ClkFormat), fnt, this.Brushes[(int)eBrush.BASE], a.X, a.Y, this.Format);
                 }
                 // デジタル切り替え用ブラシを設定
-                bh = this.Brushes["SCELL"];
-                bm = this.Brushes["RCELL"];
+                bh = this.Brushes[(int)eBrush.SCELL];
+                bm = this.Brushes[(int)eBrush.RCELL];
             }
             else
             {
@@ -220,19 +251,14 @@ namespace TimePicker
                     rad = this.Rad(i * 6 - 90);
                     if(i % 5 == 0){
                         a = this.GetArcPos(rad, ValueRadius, c.X, c.Y);
-                        g.DrawString(i.ToString("D2"), this.ClkFont, this.Brushes["BG"], a.X, a.Y, this.Format);
+                        g.DrawString(i.ToString(ClkFormat), this.ClkFont, this.Brushes[(int)eBrush.BG], a.X, a.Y, this.Format);
                     }
                 }
                 // 選択カーソルを追加（選択済分表示）
-                cell.Add(new Dictionary<string, object>()
+                cell.Add(new object[]
                 {
-                    ["radian"] = this.Rad(this.Minute * 6 - 90),
-                    ["radius"] = ValueRadius,
-                    ["size"] = ValueSize,
-                    ["font"] = this.ClkFont,
-                    ["brush"] = this.Brushes["RCELL"],
-                    ["pen"] = this.Pens["RLINE"],
-                    ["value"] = this.Minute.ToString("D2")
+                    this.Rad(this.Minute * 6 - 90),ValueRadius,ValueSize,this.ClkFont,
+                    this.Brushes[(int)eBrush.RCELL],this.Pens[(int)ePen.RLINE],this.Minute.ToString(ClkFormat)
                 });
                 d = this.GetDistance(this.X, this.Y, c.X, c.Y); // マウスカーソルと中心座標の距離を求める
                 if (d <= f / 2) // マウスカーソルが時計盤の中にあるとき
@@ -240,15 +266,10 @@ namespace TimePicker
                     rad = Math.Atan2(this.Y - c.Y, this.X - c.X); // 中心座標とマウスカーソルの相対角度を取得
                     int min = this.Rad2Minute(rad); // 角度(ラジアン）から分を取得
                     // 選択カーソルを追加（マウス追随）
-                    cell.Add(new Dictionary<string, object>()
+                    cell.Add(new object[]
                     {
-                        ["radian"] = rad,
-                        ["radius"] = ValueRadius,
-                        ["size"] = ValueSize,
-                        ["font"] = this.ClkFont,
-                        ["brush"] = this.Brushes["SCELL"],
-                        ["pen"] = this.Pens["SLINE"],
-                        ["value"] = min.ToString("D2")
+                        rad,ValueRadius,ValueSize,this.ClkFont,
+                        this.Brushes[(int)eBrush.SCELL],this.Pens[(int)ePen.SLINE],min.ToString(ClkFormat)
                     });
                     // クリックされていたら現在の分を選択する
                     if (this.Clicked)
@@ -257,24 +278,24 @@ namespace TimePicker
                     }
                 }
                 // デジタル切り替え用ブラシを設定
-                bh = this.Brushes["RCELL"];
-                bm = this.Brushes["SCELL"];
+                bh = this.Brushes[(int)eBrush.RCELL];
+                bm = this.Brushes[(int)eBrush.SCELL];
             }
             // 選択カーソル表示
-            foreach(Dictionary<string,object> o in cell)
+            foreach(object[] o in cell)
             {
-                a = this.GetArcPos((double)o["radian"], (int)o["radius"], c.X, c.Y);
-                g.DrawLine((Pen)o["pen"], c.X, c.Y, a.X, a.Y);
-                g.FillPie((SolidBrush)o["brush"], c.X - 16, c.Y - 16, 32, 32, 0, 360);
-                s = (int)o["size"];
-                g.FillPie((SolidBrush)o["brush"], a.X - s / 2, a.Y - s / 2, s, s, 0, 360);
-                g.DrawString((string)o["value"], (Font)o["font"], this.Brushes["BASE"], a.X, a.Y, this.Format);
+                a = this.GetArcPos((double)o[(int)eCell.Radian], (int)o[(int)eCell.Radius], c.X, c.Y);
+                g.DrawLine((Pen)o[(int)eCell.Pen], c.X, c.Y, a.X, a.Y);
+                g.FillPie((SolidBrush)o[(int)eCell.Brush], c.X - 16, c.Y - 16, 32, 32, 0, 360);
+                s = (int)o[(int)eCell.Size];
+                g.FillPie((SolidBrush)o[(int)eCell.Brush], a.X - s / 2, a.Y - s / 2, s, s, 0, 360);
+                g.DrawString((string)o[(int)eCell.Value], (Font)o[(int)eCell.Font], this.Brushes[(int)eBrush.BASE], a.X, a.Y, this.Format);
             }
             // デジタル部
-            g.FillRectangle(this.Brushes["BASE"], dr.Left, dr.Top, dr.Width, dr.Height);
-            g.DrawString(this.Hour.ToString("D2"), this.Font, bh, c.X - 88, 112, this.Format);
-            g.DrawString(":", this.Font, this.Brushes["RCELL"], c.X, 104, this.Format);
-            g.DrawString(this.Minute.ToString("D2"), this.Font, bm, c.X + 88, 112, this.Format);
+            g.FillRectangle(this.Brushes[(int)eBrush.BASE], dr.Left, dr.Top, dr.Width, dr.Height);
+            g.DrawString(this.Hour.ToString(ClkFormat), this.Font, bh, c.X - 88, 112, this.Format);
+            g.DrawString(":", this.Font, this.Brushes[(int)eBrush.CELL], c.X, 104, this.Format);
+            g.DrawString(this.Minute.ToString(ClkFormat), this.Font, bm, c.X + 88, 112, this.Format);
             this.Image = this.Bmp;
         }
 
@@ -324,7 +345,7 @@ namespace TimePicker
         // テキストプロパティを更新
         private void SetText()
         {
-            this.Text = this.Hour.ToString("D2") + ":" + this.Minute.ToString("D2");
+            this.Text = this.Hour.ToString(ClkFormat) + ":" + this.Minute.ToString(ClkFormat);
         }
 
         // コントロール上でマウスカーソルが移動したとき
