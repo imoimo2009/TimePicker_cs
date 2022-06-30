@@ -259,6 +259,7 @@ namespace TimePicker
             g.FillPie(Brushes[(int)eBrush.BASE], c.X - r, c.Y - r, d, d, 0, 360);
             if (Mode == 0) {
                 // 時間入力モード
+                object[] obj = new object[0];
                 for (int i = 23; i >= 0; i--)
                 {
                     if (i < 12)
@@ -281,10 +282,10 @@ namespace TimePicker
                     if (dt <= s) // 時間表示の円の内側にマウスカーソルがあるとき
                     {
                         // 選択カーソルを追加（マウス追随）
-                        cell.Add(new object[]
+                        obj = new object[]
                         {
                             rad,r,s,fnt,Brushes[(int)eBrush.SCELL],Pens[(int)ePen.SLINE],i.ToString(ClkFormat)
-                        });
+                        };
                         // クリックされていたら現在の時間を選択する
                         if (Clicked)
                         {
@@ -303,6 +304,10 @@ namespace TimePicker
                     // 時間の描画
                     g.FillPie(Brushes[(int)eBrush.CELL], a.X - s, a.Y - s, s * 2, s * 2, 0, 360);
                     g.DrawString(i.ToString(ClkFormat), fnt, Brushes[(int)eBrush.BASE], a.X, a.Y, Format);
+                }
+                if (obj.Length > 0)
+                {
+                    cell.Add(obj);
                 }
                 // デジタル切り替え用ブラシを設定
                 bh = Brushes[(int)eBrush.SCELL];
