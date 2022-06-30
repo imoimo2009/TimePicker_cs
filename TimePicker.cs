@@ -132,6 +132,24 @@ namespace TimePicker
             Init(width, height);
         }
 
+        // デストラクタ
+        ~TimePicker()
+        {
+            foreach(SolidBrush b in Brushes)
+            {
+                b.Dispose();
+            }
+            foreach (Pen p in Pens)
+            {
+                p.Dispose();
+            }
+            Format.Dispose();
+            Gp.Dispose();
+            Bmp.Dispose();
+            ClkFont.Dispose();
+            ClkFont2.Dispose();
+        }
+
         // 初期化処理
         private void Init()
         {
