@@ -268,6 +268,7 @@ namespace TimePicker
                         if (Clicked)
                         {
                             Hour = i;
+                            SetText();
                         }
                     }
                     else if (i == Hour) // 表示時間が選択時間と同じ場合
@@ -318,6 +319,7 @@ namespace TimePicker
                     if (Clicked)
                     {
                         Minute = min;
+                        SetText();
                     }
                 }
                 // デジタル切り替え用ブラシを設定
@@ -417,7 +419,6 @@ namespace TimePicker
         private void TimePicker_MouseDown(object sender, MouseEventArgs e)
         {
             Clicked = true;
-            SetText();
             if (ChkInRect(DigitalRect)){
                 if (X < Center.X)
                 {
