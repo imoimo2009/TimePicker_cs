@@ -365,7 +365,7 @@ namespace TimePicker
             Point a;
             SolidBrush b,bh,bm;
             Pen p;
-            List<object[]> cursol = new List<object[]>();
+            List<object[]> cursol;
 
             // 背景
             b = GetBrush(eBrush.BG);
@@ -413,9 +413,9 @@ namespace TimePicker
             UpdateCursol(cursol);
             // デジタル部
             Gp.FillRectangle(GetBrush(eBrush.BASE), DigitalRect);
-            Gp.DrawString(Hour.ToString(ClkFormat), Font, bh, Center.X - DigitalStringOffset, DigitalStringTop, Format);
+            Gp.DrawString(ClkStr(Hour), Font, bh, Center.X - DigitalStringOffset, DigitalStringTop, Format);
             Gp.DrawString(DigitalDelimiter, Font, GetBrush(eBrush.CELL), Center.X, DigitalDelimiterTop, Format);
-            Gp.DrawString(Minute.ToString(ClkFormat), Font, bm, Center.X + DigitalStringOffset, DigitalStringTop, Format);
+            Gp.DrawString(ClkStr(Minute), Font, bm, Center.X + DigitalStringOffset, DigitalStringTop, Format);
             Image = Bmp;
         }
 
