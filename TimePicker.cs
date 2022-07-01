@@ -38,8 +38,7 @@ namespace TimePicker
         // 選択カーソルパラメータインデックスの列挙体
         enum eCell
         {
-            Radian,     // 角度（ラジアン）
-            Radius,     // 時計盤原点からの半径
+            Point,      // 座標
             Size,       // サイズ
             Font,       // フォント
             Brush,      // ブラシ
@@ -52,10 +51,7 @@ namespace TimePicker
         private const int DefaultHeight = 240;                      // デフォルトの高さ
         private const int BitmapWidth = 800;                        // ビットマップの幅
         private const int BitmapHeight = 960;                       // ビットマップの高さ
-        private const int CenterLeft = 400;                         // 時計盤の原点X
-        private const int CenterTop = 560;                          // 時計盤の原点Y
         private const int BGRadius = 32;                            // 背景角丸の半径
-        private const int BGDiameter = BGRadius * 2;                // 背景角丸の直径
         private const int BGLeftTopDeg = 180;                       // 左上の開始角
         private const int BGRightTopDeg = 270;                      // 右上の開始角
         private const int BGLeftBottomDeg = 90;                     // 左下の開始角
@@ -65,13 +61,15 @@ namespace TimePicker
         private const int CloseBtnRadius = 27;                      // 閉じるボタンの半径
         private const int CloseBtnLine = 15;                        // 閉じるボタンＸの描画開始位置
         private const int CloseBtnLineWidth = 6;                    // 閉じるボタンＸの太さ
+        private const int CenterLeft = 400;                         // 時計盤の原点X
+        private const int CenterTop = 560;                          // 時計盤の原点Y
+        private const int CenterRadius = 16;                        // 時計盤中心点の半径
         private const int BaseRadius = 360;                         // 時計盤の半径
-        private const int BaseDiameter = BaseRadius * 2;            // 時計盤の直径
         private const int ValueSize = 50;                           // 時間表示のサイズ(外側)
         private const int ValueRadius = 292;                        // 時間表示の原点からの距離(外側)
         private const int ValueSize2 = 44;                          // 時間表示のサイズ(内側)
         private const int ValueRadius2 = 188;                       // 時間表示の原点からの距離(内側)
-        private const string ClkFontName = "ＭＳ　ゴシック";        // 時間表示のフォント名称 
+        private const string ClkFontName = "ＭＳ　ゴシック";         // 時間表示のフォント名称 
         private const int ClkFontSise = 48;                         // 時間表示のフォントサイズ(外側)
         private const int ClkFontSise2 = 36;                        // 時間表示のフォントサイズ(内側)
         private const int ClkLineWidth = 8;                         // 時計盤の針の太さ
@@ -80,7 +78,11 @@ namespace TimePicker
         private const int DigitalTop = 40;                          // デジタル矩形部の位置Y
         private const int DigitalWidth = 400;                       // デジタル矩形部の幅
         private const int DigitalHeight = 144;                      // デジタル矩形部の高さ
-        private const string DigitalFontName = "ＭＳ　ゴシック";    // デジタル表示部のフォント名称
+        private const int DigitalDelimiterTop = 104;                // デジタル区切り文字の上端位置
+        private const int DigitalStringTop = 112;                   // デジタル文字列の上端位置
+        private const int DigitalStringOffset = 88;                 // デジタル文字列の中心からの距離
+        private const string DigitalDelimiter = ":";                // デジタル文字列の区切り文字
+        private const string DigitalFontName = "ＭＳ　ゴシック";     // デジタル表示部のフォント名称
         private const int DigitalFontSise = 80;                     // デジタル表示部のフォントサイズ
         private const string BrushesColor_BG = "#AAAAFF";           // 背景の色(ブラシ)
         private const string BrushesColor_BASE = "#4444AA";         // 時計盤の色(ブラシ)
@@ -95,47 +97,63 @@ namespace TimePicker
         private const string PensColor_SCLOSE = "#FFDDDD";          // 閉じるボタンマウスオーバーの色(ペン)
 
         // 変数定義
-        private int X,Y;                                            // マウス座標
+        private int X, Y;                                            // マウス座標
         private bool Clicked;                                       // クリックの状態
         private eMode Mode;                                         // 入力モード
         private PointF DrawScale;                                   // 描画スケール
-        private Point Center,CloseBtn;                              // 原点、閉じるボタンの位置
+        private Point Center, CloseBtn;                              // 原点、閉じるボタンの位置
         private Rectangle DigitalRect;                              // デジタル表示部の矩形
         private SolidBrush[] Brushes;                               // ブラシ格納用
         private Pen[] Pens;                                         // ペン格納用
         private Bitmap Bmp;                                         // ビットマップ
         private Graphics Gp;                                        // ビットマップ描画用グラフィックオブジェクト
         private StringFormat Format;                                // 文字列配置指定
-        private Font ClkFont,ClkFont2;                              // 時間表示フォント(外側、内側)
+        private Font ClkFont, ClkFont2;                              // 時間表示フォント(外側、内側)
+        private bool Modified;                                      // 項目更新フラグ
 
         // プロパティ定義
-        public int Hour { get; private set; }                       // 時間
-        public int Minute { get; private set; }                     // 分
+        public int Hour { get; set; }                               // 時間
+        public int Minute { get; set; }                             // 分
         public new string Text { get; set; }                        // 時刻文字列
+        public bool AutoNext { get; set; }                          // 自動切換モード
 
-        // コンストラクタ
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
         public TimePicker() : base()
         {
             Init();
         }
 
-        // コンストラクタ（位置指定）
-        public TimePicker(int left, int top) : base() {
+        /// <summary>
+        /// コンストラクタ（位置指定）
+        /// </summary>
+        /// <param name="left">左端座標(X座標)</param>
+        /// <param name="top">上端座標(Y座標)</param>
+        public TimePicker(int left, int top) : base()
+        {
             Location = new Point(left, top);
             Init();
         }
-
-        // コンストラクタ（位置・サイズ指定）
+        /// <summary>
+        /// コンストラクタ（位置・サイズ指定）
+        /// </summary>
+        /// <param name="left">左端座標(X座標)</param>
+        /// <param name="top">上端座標(Y座標)</param>
+        /// <param name="width">幅</param>
+        /// <param name="height">高さ</param>
         public TimePicker(int left, int top, int width, int height) : base()
         {
             Location = new Point(left, top);
             Init(width, height);
         }
 
-        // デストラクタ
+        /// <summary>
+        /// デストラクタ
+        /// </summary>
         ~TimePicker()
         {
-            foreach(SolidBrush b in Brushes)
+            foreach (SolidBrush b in Brushes)
             {
                 b.Dispose();
             }
@@ -150,13 +168,35 @@ namespace TimePicker
             ClkFont2.Dispose();
         }
 
-        // 初期化処理
+        /// <summary>
+        /// TimePickerを開く
+        /// </summary>
+        public void Open()
+        {
+            Visible = true;
+        }
+
+        /// <summary>
+        /// TimePickerを閉じる
+        /// </summary>
+        public void Close()
+        {
+            Visible = false;
+        }
+
+        /// <summary>
+        /// 初期化処理
+        /// </summary>
         private void Init()
         {
             Init(DefaultWidth, DefaultHeight);
         }
 
-        // 初期化処理（サイズ指定）
+        /// <summary>
+        /// 初期化処理（サイズ指定）
+        /// </summary>
+        /// <param name="width">幅</param>
+        /// <param name="height">高さ</param>
         private void Init(int width, int height)
         {
             // プロパティ初期化
@@ -186,10 +226,10 @@ namespace TimePicker
                 new Pen(ColorTranslator.FromHtml(PensColor_CLOSE)),
                 new Pen(ColorTranslator.FromHtml(PensColor_SCLOSE))
             };
-            Pens[(int)ePen.SLINE].Width = ClkLineWidth;
-            Pens[(int)ePen.RLINE].Width = ClkLineWidth;
-            Pens[(int)ePen.CLOSE].Width = CloseBtnLineWidth;
-            Pens[(int)ePen.SCLOSE].Width = CloseBtnLineWidth;
+            GetPen(ePen.SLINE).Width = ClkLineWidth;
+            GetPen(ePen.RLINE).Width = ClkLineWidth;
+            GetPen(ePen.CLOSE).Width = CloseBtnLineWidth;
+            GetPen(ePen.SCLOSE).Width = CloseBtnLineWidth;
             Bmp = new Bitmap(BitmapWidth, BitmapHeight); // レンダリング用ビットマップオブジェクト
             Gp = Graphics.FromImage(Bmp); // ビットマップからGraphicオブジェクトを作成しておく
             Format = new StringFormat(); // DrawStringに指定する文字配置
@@ -203,7 +243,7 @@ namespace TimePicker
             Size = new Size(width, height);
             BorderStyle = BorderStyle.None;
             BackColor = Color.Transparent;
-            Font = new Font(DigitalFontName,DigitalFontSise, FontStyle.Bold);
+            Font = new Font(DigitalFontName, DigitalFontSise, FontStyle.Bold);
             SizeMode = PictureBoxSizeMode.StretchImage;
             // イベントハンドラ登録
             Paint += TimePicker_Paint;
@@ -211,53 +251,156 @@ namespace TimePicker
             MouseUp += TimePicker_MouseUp;
             MouseMove += TimePicker_MouseMove;
             MouseLeave += TimePicker_MouseLeave;
+            VisibleChanged += TimePicker_VisibleChanged;
         }
 
-        // オーナードロー(独自描画)処理
+        /// <summary>
+        /// [イベントハンドラ]
+        /// コントロール上でマウスカーソルが移動したとき
+        /// </summary>
+        /// <param name="sender">イベント元オブジェクト</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void TimePicker_MouseMove(object sender, MouseEventArgs e)
+        {
+            X = (int)((float)e.X * DrawScale.X);
+            Y = (int)((float)e.Y * DrawScale.Y);
+            Invalidate();
+        }
+
+        /// <summary>
+        /// [イベントハンドラ]
+        /// マウスボタンが離されたとき
+        /// </summary>
+        /// <param name="sender">イベント元オブジェクト</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void TimePicker_MouseUp(object sender, MouseEventArgs e)
+        {
+            Clicked = false;
+            if (AutoNext && Modified && ChkInCircle(Center, BaseRadius))
+            {
+                switch (Mode)
+                {
+                    case eMode.Hour:
+                        SetMode(eMode.Minute);
+                        Invalidate();
+                        break;
+                    case eMode.Minute:
+                        Close();
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// [イベントハンドラ]
+        /// マウスボタンが押されたとき
+        /// </summary>
+        /// <param name="sender">イベント元オブジェクト</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void TimePicker_MouseDown(object sender, MouseEventArgs e)
+        {
+            switch (e.Button)
+            {
+                case MouseButtons.Left:
+                    Clicked = true;
+                    if (ChkInRect(DigitalRect))
+                    {
+                        if (X < Center.X)
+                        {
+                            SetMode(eMode.Hour);
+                        }
+                        else
+                        {
+                            SetMode(eMode.Minute);
+                        }
+                    }
+                    Invalidate();
+                    if (ChkInCircle(CloseBtn,CloseBtnRadius))
+                    {
+                        Close();
+                    }
+                    break;
+                case MouseButtons.Right:
+                    if (ChkInCircle(Center,BaseRadius))
+                    {
+                        SetMode((eMode)1 - (int)Mode);
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// [イベントハンドラ]
+        /// マウスカーソルがコントロールから離れたとき
+        /// </summary>
+        /// <param name="sender">イベント元オブジェクト</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void TimePicker_MouseLeave(object sender, EventArgs e)
+        {
+            Invalidate();
+        }
+
+        /// <summary>
+        /// [イベントハンドラ]
+        /// Visibleプロパティが変更されたとき
+        /// </summary>
+        /// <param name="sender">イベント元オブジェクト</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void TimePicker_VisibleChanged(object sender, EventArgs e)
+        {
+            SetMode(eMode.Hour);
+            Invalidate();
+        }
+
+        /// <summary>
+        /// [イベントハンドラ]
+        /// オーナードロー(独自描画)処理
+        /// </summary>
+        /// <param name="sender">イベント元オブジェクト</param>
+        /// <param name="e">イベントパラメータ</param>
         private void TimePicker_Paint(object sender, PaintEventArgs e)
         {
             // 変数定義
-            int r,s,d;
-            double rad,dt;
+            int r, s;
+            double rad;
+            string v;
             Font fnt;
-            Point a,c = Center;
-            Graphics g = Gp;
-            Size sz = Bmp.Size;
-            List<object[]> cell = new List<object[]>();
-            SolidBrush bh, bm,b = Brushes[(int)eBrush.BG];
+            Point a;
+            SolidBrush b,bh,bm;
             Pen p;
-            Rectangle dr = DigitalRect;
+            List<object[]> cell = new List<object[]>();
 
             // 背景
-            g.FillRectangle(b, 0,BGRadius, sz.Width, sz.Height - BGDiameter);
-            g.FillRectangle(b, BGRadius, 0, sz.Width - BGDiameter, sz.Height);
-            g.FillPie(b, 0, 0, BGDiameter, BGDiameter, BGLeftTopDeg, 90);
-            g.FillPie(b, sz.Width - BGDiameter, 0, BGDiameter, BGDiameter, BGRightTopDeg, 90);
-            g.FillPie(b, 0, sz.Height - BGDiameter, BGDiameter, BGDiameter, BGLeftBottomDeg, 90);
-            g.FillPie(b, sz.Width - BGDiameter, sz.Height - BGDiameter, BGDiameter, BGDiameter, BGRrightBottomDeg, 90);
+            b = GetBrush(eBrush.BG);
+            r = BGRadius;
+            Gp.FillRectangle(b, 0, r, Bmp.Width, Bmp.Height - r * 2);
+            Gp.FillRectangle(b, r, 0, Bmp.Width - r * 2, Bmp.Height);
+            Gp.FillPie(b, 0, 0, r * 2, r * 2, BGLeftTopDeg, 90);
+            Gp.FillPie(b, Bmp.Width - r * 2, 0, r * 2, r * 2, BGRightTopDeg, 90);
+            Gp.FillPie(b, 0, Bmp.Height - r * 2, r * 2, r * 2, BGLeftBottomDeg, 90);
+            Gp.FillPie(b, Bmp.Width - r * 2, Bmp.Height - r * 2, r * 2, r * 2, BGRrightBottomDeg, 90);
             // 閉じるボタン
-            dt = GetDistance(X, Y,CloseBtn.X,CloseBtn.Y);
-            if (dt <= CloseBtnRadius)
+            if (ChkInCircle(CloseBtn, CloseBtnRadius))
             {
-                b = Brushes[(int)eBrush.SCLOSE];
-                p = Pens[(int)ePen.SCLOSE];
+                b = GetBrush(eBrush.SCLOSE);
+                p = GetPen(ePen.SCLOSE);
             }
             else
             {
-                b = Brushes[(int)eBrush.CLOSE];
-                p = Pens[(int)ePen.CLOSE];
+                b = GetBrush(eBrush.CLOSE);
+                p = GetPen(ePen.CLOSE);
             }
             a = CloseBtn;
             r = CloseBtnRadius;
-            g.FillPie(b, a.X - CloseBtnRadius,a.Y - r, r * 2, r * 2, 0, 360);
+            Gp.FillPie(b, a.X - r, a.Y - r, r * 2, r * 2, 0, 360);
             r = CloseBtnLine;
-            g.DrawLine(p, a.X - r, a.Y - r, a.X + r, a.Y + r);
-            g.DrawLine(p, a.X - r, a.Y + r, a.X + r, a.Y - r);
+            Gp.DrawLine(p, a.X - r, a.Y - r, a.X + r, a.Y + r);
+            Gp.DrawLine(p, a.X - r, a.Y + r, a.X + r, a.Y - r);
             // アナログ部
             r = BaseRadius;
-            d = BaseDiameter;
-            g.FillPie(Brushes[(int)eBrush.BASE], c.X - r, c.Y - r, d, d, 0, 360);
-            if (Mode == 0) {
+            Gp.FillPie(GetBrush(eBrush.BASE), Center.X - r, Center.Y - r, r * 2, r * 2, 0, 360);
+            if (Mode == 0)
+            {
                 // 時間入力モード
                 object[] obj = new object[0];
                 for (int i = 23; i >= 0; i--)
@@ -277,14 +420,13 @@ namespace TimePicker
                         fnt = ClkFont2;
                     }
                     rad = Rad((i % 12) * 30 - 90); // 時計盤に表示する時間の角度を取得
-                    a = GetArcPos(rad, r, c.X, c.Y); // 時計盤に表示する時間の座標を取得
-                    dt = GetDistance(X, Y, a.X, a.Y); //マウスカーソルと時間の座標の距離を求める
-                    if (dt <= s) // 時間表示の円の内側にマウスカーソルがあるとき
+                    a = GetArcPos(rad, r); // 時計盤に表示する時間の座標を取得
+                    if (ChkInCircle(a, s)) // 時間表示の円の内側にマウスカーソルがあるとき
                     {
                         // 選択カーソルを追加（マウス追随）
                         obj = new object[]
                         {
-                            rad,r,s,fnt,Brushes[(int)eBrush.SCELL],Pens[(int)ePen.SLINE],i.ToString(ClkFormat)
+                            a,s,fnt,GetBrush(eBrush.SCELL),GetPen(ePen.SLINE),ClkStr(i)
                         };
                         // クリックされていたら現在の時間を選択する
                         if (Clicked)
@@ -298,48 +440,49 @@ namespace TimePicker
                         // 選択カーソルを追加（選択済時間表示）
                         cell.Add(new object[]
                         {
-                            rad,r,s,fnt,Brushes[(int)eBrush.RCELL],Pens[(int)ePen.RLINE],i.ToString(ClkFormat)
+                            a,s,fnt,GetBrush(eBrush.RCELL),GetPen(ePen.RLINE),ClkStr(i)
                         });
                     }
                     // 時間の描画
-                    g.FillPie(Brushes[(int)eBrush.CELL], a.X - s, a.Y - s, s * 2, s * 2, 0, 360);
-                    g.DrawString(i.ToString(ClkFormat), fnt, Brushes[(int)eBrush.BASE], a.X, a.Y, Format);
+                    Gp.FillPie(GetBrush(eBrush.CELL), a.X - s, a.Y - s, s * 2, s * 2, 0, 360);
+                    Gp.DrawString(ClkStr(i), fnt, GetBrush(eBrush.BASE), a, Format);
                 }
                 if (obj.Length > 0)
                 {
                     cell.Add(obj);
                 }
                 // デジタル切り替え用ブラシを設定
-                bh = Brushes[(int)eBrush.SCELL];
-                bm = Brushes[(int)eBrush.RCELL];
+                bh = GetBrush(eBrush.SCELL);
+                bm = GetBrush(eBrush.RCELL);
             }
             else
             {
                 // 分入力モード
-                for (int i = 0; i < 60 ; i++)
+                for (int i = 0; i < 60; i++)
                 {
-                    rad = Rad(i * 6 - 90);
-                    if(i % 5 == 0){
-                        a = GetArcPos(rad, ValueRadius, c.X, c.Y);
-                        g.DrawString(i.ToString(ClkFormat), ClkFont, Brushes[(int)eBrush.BG], a.X, a.Y, Format);
+                    a = GetArcPos(Rad(i * 6 - 90), ValueRadius);
+                    if (i % 5 == 0)
+                    {
+                        Gp.DrawString(ClkStr(i), ClkFont, GetBrush(eBrush.BG), a, Format);
+                    }
+                    if (i == Minute) // 選択カーソルを追加（選択済分表示）
+                    {
+                        cell.Add(new object[]
+                        {
+                            a,ValueSize,ClkFont,GetBrush(eBrush.RCELL),GetPen(ePen.RLINE),ClkStr(i)
+                        });
+
                     }
                 }
-                // 選択カーソルを追加（選択済分表示）
-                cell.Add(new object[]
+                if (ChkInCircle(Center, BaseRadius)) // マウスカーソルが時計盤の中にあるとき
                 {
-                    Rad(Minute * 6 - 90),ValueRadius,ValueSize,ClkFont,
-                    Brushes[(int)eBrush.RCELL],Pens[(int)ePen.RLINE],Minute.ToString(ClkFormat)
-                });
-                dt = GetDistance(X, Y, c.X, c.Y); // マウスカーソルと中心座標の距離を求める
-                if (dt <= BaseRadius) // マウスカーソルが時計盤の中にあるとき
-                {
-                    rad = Math.Atan2(Y - c.Y, X - c.X); // 中心座標とマウスカーソルの相対角度を取得
+                    rad = Math.Atan2(Y - Center.Y, X - Center.X); // 中心座標とマウスカーソルの相対角度を取得
+                    a = GetArcPos(rad, ValueRadius);
                     int min = Rad2Minute(rad); // 角度(ラジアン）から分を取得
                     // 選択カーソルを追加（マウス追随）
                     cell.Add(new object[]
                     {
-                        rad,ValueRadius,ValueSize,ClkFont,
-                        Brushes[(int)eBrush.SCELL],Pens[(int)ePen.SLINE],min.ToString(ClkFormat)
+                        a,ValueSize,ClkFont,GetBrush(eBrush.SCELL),GetPen(ePen.SLINE),ClkStr(min)
                     });
                     // クリックされていたら現在の分を選択する
                     if (Clicked)
@@ -349,43 +492,65 @@ namespace TimePicker
                     }
                 }
                 // デジタル切り替え用ブラシを設定
-                bh = Brushes[(int)eBrush.RCELL];
-                bm = Brushes[(int)eBrush.SCELL];
+                bh = GetBrush(eBrush.RCELL);
+                bm = GetBrush(eBrush.SCELL);
             }
             // 選択カーソル表示
-            foreach(object[] o in cell)
+            foreach (object[] o in cell)
             {
-                a = GetArcPos((double)o[(int)eCell.Radian], (int)o[(int)eCell.Radius], c.X, c.Y);
-                g.DrawLine((Pen)o[(int)eCell.Pen], c.X, c.Y, a.X, a.Y);
-                g.FillPie((SolidBrush)o[(int)eCell.Brush], c.X - 16, c.Y - 16, 32, 32, 0, 360);
+                a = (Point)o[(int)eCell.Point];
                 s = (int)o[(int)eCell.Size];
-                g.FillPie((SolidBrush)o[(int)eCell.Brush], a.X - s, a.Y - s, s * 2, s * 2, 0, 360);
-                g.DrawString((string)o[(int)eCell.Value], (Font)o[(int)eCell.Font], Brushes[(int)eBrush.BASE], a.X, a.Y, Format);
+                b = (SolidBrush)o[(int)eCell.Brush];
+                p = (Pen)o[(int)eCell.Pen];
+                fnt = (Font)o[(int)eCell.Font];
+                v = (string)o[(int)eCell.Value];
+                Gp.DrawLine(p, Center, a);
+                Gp.FillPie(b, Center.X - CenterRadius, Center.Y - CenterRadius, CenterRadius * 2, CenterRadius * 2, 0, 360);
+                Gp.FillPie(b, a.X - s, a.Y - s, s * 2, s * 2, 0, 360);
+                Gp.DrawString(v, fnt, GetBrush(eBrush.BASE), a, Format);
             }
             // デジタル部
-            g.FillRectangle(Brushes[(int)eBrush.BASE], dr.Left, dr.Top, dr.Width, dr.Height);
-            g.DrawString(Hour.ToString(ClkFormat), Font, bh, c.X - 88, 112, Format);
-            g.DrawString(":", Font, Brushes[(int)eBrush.CELL], c.X, 104, Format);
-            g.DrawString(Minute.ToString(ClkFormat), Font, bm, c.X + 88, 112, Format);
+            Gp.FillRectangle(GetBrush(eBrush.BASE), DigitalRect);
+            Gp.DrawString(Hour.ToString(ClkFormat), Font, bh, Center.X - DigitalStringOffset, DigitalStringTop, Format);
+            Gp.DrawString(DigitalDelimiter, Font, GetBrush(eBrush.CELL), Center.X, DigitalDelimiterTop, Format);
+            Gp.DrawString(Minute.ToString(ClkFormat), Font, bm, Center.X + DigitalStringOffset, DigitalStringTop, Format);
             Image = Bmp;
         }
 
-        // 角度をラジアンに変換
+        /// <summary>
+        /// 角度をラジアンに変換
+        /// </summary>
+        /// <param name="deg">角度(degree)</param>
+        /// <returns>double 角度(radian)</returns>
         private double Rad(int deg)
         {
             return Math.PI / 180 * deg;
         }
 
-        // 指定角度の円弧座標を返す
-        private Point GetArcPos(double rad, int r, int x, int y)
+        /// <summary>
+        /// 指定角度の円弧座標を返す
+        /// </summary>
+        /// <param name="rad">角度(radian)</param>
+        /// <param name="r">半径</param>
+        /// <param name="x">中心X座標</param>
+        /// <param name="y">中心Y座標</param>
+        /// <returns>Point 円弧座標</returns>
+        private Point GetArcPos(double rad, int r)
         {
             Point p = new Point();
-            p.X = Convert.ToInt32(Math.Cos(rad) * r + x);
-            p.Y = Convert.ToInt32(Math.Sin(rad) * r + y);
+            p.X = Convert.ToInt32(Math.Cos(rad) * r + Center.X);
+            p.Y = Convert.ToInt32(Math.Sin(rad) * r + Center.Y);
             return p;
         }
 
-        // 2点間の距離を算出
+        /// <summary>
+        /// 2点間の距離を算出
+        /// </summary>
+        /// <param name="x1">点1のX座標</param>
+        /// <param name="y1">点1のY座標</param>
+        /// <param name="x2">点2のX座標</param>
+        /// <param name="y2">点2のY座標</param>
+        /// <returns>double 距離(pixel)</returns>
         private double GetDistance(int x1, int y1, int x2, int y2)
         {
             double xp = Math.Pow(Math.Abs(x2 - x1), 2);
@@ -393,7 +558,11 @@ namespace TimePicker
             return Math.Sqrt(xp + yp);
         }
 
-        // ラジアンから分を返す
+        /// <summary>
+        /// ラジアンから分の数値を返す
+        /// </summary>
+        /// <param name="rad">角度(radian)</param>
+        /// <returns>int 分</returns>
         private int Rad2Minute(double rad)
         {
             int m = Convert.ToInt32(rad / (Math.PI * 2) * 60 + 15);
@@ -404,7 +573,14 @@ namespace TimePicker
             return m;
         }
 
-        // レンダリングサイズに対するUIサイズの比率を取得
+        /// <summary>
+        /// レンダリングサイズに対するUIサイズの比率を取得
+        /// </summary>
+        /// <param name="w1">矩形1の幅</param>
+        /// <param name="h1">矩形1の幅</param>
+        /// <param name="w2">矩形2の高さ</param>
+        /// <param name="h2">矩形2の高さ</param>
+        /// <returns>PointF UIサイズの比率</returns>
         private PointF GetScale(int w1, int h1, int w2, int h2)
         {
             PointF p = new PointF();
@@ -413,13 +589,30 @@ namespace TimePicker
             return p;
         }
 
-        // テキストプロパティを更新
+        /// <summary>
+        /// テキストプロパティを更新
+        /// </summary>
         private void SetText()
         {
             Text = Hour.ToString(ClkFormat) + ":" + Minute.ToString(ClkFormat);
+            Modified = true;
         }
 
-        // 矩形の内部にマウスカーソルがあるか判定する
+        /// <summary>
+        /// モード切替
+        /// </summary>
+        /// <param name="mode">入力モード</param>
+        private void SetMode(eMode mode)
+        {
+            Mode = mode;
+            Modified = false;
+        }
+
+        /// <summary>
+        /// 矩形の内部にマウスカーソルがあるか判定する
+        /// </summary>
+        /// <param name="r">矩形領域</param>
+        /// <returns>true = 矩形の中, false = 矩形の外</returns>
         private bool ChkInRect(Rectangle r)
         {
             bool rx = X > r.Left && X < r.Right;
@@ -427,47 +620,46 @@ namespace TimePicker
             return (rx && ry);
         }
 
-        // コントロール上でマウスカーソルが移動したとき
-        private void TimePicker_MouseMove(object sender, MouseEventArgs e)
+        /// <summary>
+        /// 円領域の中にマウスカーソルがあるか判定する
+        /// </summary>
+        /// <param name="p">円の中心点</param>
+        /// <param name="r">半径</param>
+        /// <returns>true = 円の中, false = 円の外</returns>
+        private bool ChkInCircle(Point p, int r)
         {
-            X = (int)((float)e.X * DrawScale.X);
-            Y = (int)((float)e.Y * DrawScale.Y);
-            Invalidate();
+            return (GetDistance(X, Y, p.X, p.Y) < r);
         }
 
-        // マウスボタンが離されたとき
-        private void TimePicker_MouseUp(object sender, MouseEventArgs e)
+        /// <summary>
+        /// ブラシ配列からブラシを取得
+        /// </summary>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        private SolidBrush GetBrush(eBrush b)
         {
-            Clicked = false;
+            return Brushes[(int)b];
         }
 
-        // マウスボタンが押されたとき
-        private void TimePicker_MouseDown(object sender, MouseEventArgs e)
+        /// <summary>
+        /// ペン配列からペンを取得
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        private Pen GetPen(ePen p)
         {
-            Clicked = true;
-            if (ChkInRect(DigitalRect)){
-                if (X < Center.X)
-                {
-                    Mode = eMode.Hour;
-                }
-                else
-                {
-                    Mode = eMode.Minute;
-                }
-                Invalidate();
-            }
-            else if (GetDistance(X,Y,CloseBtn.X,CloseBtn.Y) < CloseBtnRadius)
-            {
-                Visible = false;
-            }
+            return Pens[(int)p];
         }
 
-        // マウスカーソルがコントロールから離れたとき
-        private void TimePicker_MouseLeave(object sender, EventArgs e)
+        /// <summary>
+        /// 時計に表示する文字列を返す
+        /// </summary>
+        /// <param name="c">数値</param>
+        /// <returns>string 表示する文字</returns>
+        private string ClkStr(int c)
         {
-            Invalidate();
+            return c.ToString(ClkFormat);
         }
-
     }
-}
+ }
 

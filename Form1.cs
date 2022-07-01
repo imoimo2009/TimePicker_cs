@@ -10,6 +10,7 @@ namespace TimePicker
         {
             InitializeComponent();
             Tp = new TimePicker(0, 0, 400, 480);
+            Tp.AutoNext = true;
             Tp.Visible = false;
             Tp.VisibleChanged += Tp_VisibleChanged;
 
