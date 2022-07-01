@@ -36,7 +36,7 @@ namespace TimePicker
         }
 
         // 選択カーソルパラメータインデックスの列挙体
-        enum eCell
+        enum eCursol
         {
             Point,      // 座標
             Size,       // サイズ
@@ -361,14 +361,11 @@ namespace TimePicker
         private void TimePicker_Paint(object sender, PaintEventArgs e)
         {
             // 変数定義
-            int r, s;
-            double rad;
-            string v;
-            Font fnt;
+            int r;
             Point a;
             SolidBrush b,bh,bm;
             Pen p;
-            List<object[]> cell = new List<object[]>();
+            List<object[]> cursol = new List<object[]>();
 
             // 背景
             b = GetBrush(eBrush.BG);
@@ -399,116 +396,21 @@ namespace TimePicker
             // アナログ部
             r = BaseRadius;
             Gp.FillPie(GetBrush(eBrush.BASE), Center.X - r, Center.Y - r, r * 2, r * 2, 0, 360);
-            if (Mode == 0)
+            if (Mode == eMode.Hour)
             {
-                // 時間入力モード
-                object[] obj = new object[0];
-                for (int i = 23; i >= 0; i--)
-                {
-                    if (i < 12)
-                    {
-                        // 0-11時
-                        r = ValueRadius;
-                        s = ValueSize;
-                        fnt = ClkFont;
-                    }
-                    else
-                    {
-                        // 12-23時
-                        r = ValueRadius2;
-                        s = ValueSize2;
-                        fnt = ClkFont2;
-                    }
-                    rad = Rad((i % 12) * 30 - 90); // 時計盤に表示する時間の角度を取得
-                    a = GetArcPos(rad, r); // 時計盤に表示する時間の座標を取得
-                    if (ChkInCircle(a, s)) // 時間表示の円の内側にマウスカーソルがあるとき
-                    {
-                        // 選択カーソルを追加（マウス追随）
-                        obj = new object[]
-                        {
-                            a,s,fnt,GetBrush(eBrush.SCELL),GetPen(ePen.SLINE),ClkStr(i)
-                        };
-                        // クリックされていたら現在の時間を選択する
-                        if (Clicked)
-                        {
-                            Hour = i;
-                            SetText();
-                        }
-                    }
-                    else if (i == Hour) // 表示時間が選択時間と同じ場合
-                    {
-                        // 選択カーソルを追加（選択済時間表示）
-                        cell.Add(new object[]
-                        {
-                            a,s,fnt,GetBrush(eBrush.RCELL),GetPen(ePen.RLINE),ClkStr(i)
-                        });
-                    }
-                    // 時間の描画
-                    Gp.FillPie(GetBrush(eBrush.CELL), a.X - s, a.Y - s, s * 2, s * 2, 0, 360);
-                    Gp.DrawString(ClkStr(i), fnt, GetBrush(eBrush.BASE), a, Format);
-                }
-                if (obj.Length > 0)
-                {
-                    cell.Add(obj);
-                }
+                cursol = UpdateHour();
                 // デジタル切り替え用ブラシを設定
                 bh = GetBrush(eBrush.SCELL);
                 bm = GetBrush(eBrush.RCELL);
             }
             else
             {
-                // 分入力モード
-                for (int i = 0; i < 60; i++)
-                {
-                    a = GetArcPos(Rad(i * 6 - 90), ValueRadius);
-                    if (i % 5 == 0)
-                    {
-                        Gp.DrawString(ClkStr(i), ClkFont, GetBrush(eBrush.BG), a, Format);
-                    }
-                    if (i == Minute) // 選択カーソルを追加（選択済分表示）
-                    {
-                        cell.Add(new object[]
-                        {
-                            a,ValueSize,ClkFont,GetBrush(eBrush.RCELL),GetPen(ePen.RLINE),ClkStr(i)
-                        });
-
-                    }
-                }
-                if (ChkInCircle(Center, BaseRadius)) // マウスカーソルが時計盤の中にあるとき
-                {
-                    rad = Math.Atan2(Y - Center.Y, X - Center.X); // 中心座標とマウスカーソルの相対角度を取得
-                    a = GetArcPos(rad, ValueRadius);
-                    int min = Rad2Minute(rad); // 角度(ラジアン）から分を取得
-                    // 選択カーソルを追加（マウス追随）
-                    cell.Add(new object[]
-                    {
-                        a,ValueSize,ClkFont,GetBrush(eBrush.SCELL),GetPen(ePen.SLINE),ClkStr(min)
-                    });
-                    // クリックされていたら現在の分を選択する
-                    if (Clicked)
-                    {
-                        Minute = min;
-                        SetText();
-                    }
-                }
+                cursol = UpdateMinute();
                 // デジタル切り替え用ブラシを設定
                 bh = GetBrush(eBrush.RCELL);
                 bm = GetBrush(eBrush.SCELL);
             }
-            // 選択カーソル表示
-            foreach (object[] o in cell)
-            {
-                a = (Point)o[(int)eCell.Point];
-                s = (int)o[(int)eCell.Size];
-                b = (SolidBrush)o[(int)eCell.Brush];
-                p = (Pen)o[(int)eCell.Pen];
-                fnt = (Font)o[(int)eCell.Font];
-                v = (string)o[(int)eCell.Value];
-                Gp.DrawLine(p, Center, a);
-                Gp.FillPie(b, Center.X - CenterRadius, Center.Y - CenterRadius, CenterRadius * 2, CenterRadius * 2, 0, 360);
-                Gp.FillPie(b, a.X - s, a.Y - s, s * 2, s * 2, 0, 360);
-                Gp.DrawString(v, fnt, GetBrush(eBrush.BASE), a, Format);
-            }
+            UpdateCursol(cursol);
             // デジタル部
             Gp.FillRectangle(GetBrush(eBrush.BASE), DigitalRect);
             Gp.DrawString(Hour.ToString(ClkFormat), Font, bh, Center.X - DigitalStringOffset, DigitalStringTop, Format);
@@ -518,7 +420,146 @@ namespace TimePicker
         }
 
         /// <summary>
-        /// 角度をラジアンに変換
+        /// 時間入力モード
+        /// </summary>
+        /// <returns>List&lt;object[]&gt; カーソルリスト</returns>
+        private List<object[]> UpdateHour()
+        {
+            int r, s;
+            double rad;
+            Font fnt;
+            Point a;
+            List<object[]> cursol = new List<object[]>();
+            object[] obj = new object[0];
+
+            for (int i = 23; i >= 0; i--)
+            {
+                if (i < 12)
+                {
+                    // 0-11時
+                    r = ValueRadius;
+                    s = ValueSize;
+                    fnt = ClkFont;
+                }
+                else
+                {
+                    // 12-23時
+                    r = ValueRadius2;
+                    s = ValueSize2;
+                    fnt = ClkFont2;
+                }
+                rad = Rad((i % 12) * 30 - 90); // 時計盤に表示する時間の角度を取得
+                a = GetArcPos(rad, r); // 時計盤に表示する時間の座標を取得
+                if (ChkInCircle(a, s)) // 時間表示の円の内側にマウスカーソルがあるとき
+                {
+                    // 選択カーソルを追加（マウス追随）
+                    obj = new object[]
+                    {
+                            a,s,fnt,GetBrush(eBrush.SCELL),GetPen(ePen.SLINE),ClkStr(i)
+                    };
+                    // クリックされていたら現在の時間を選択する
+                    if (Clicked)
+                    {
+                        Hour = i;
+                        SetText();
+                    }
+                }
+                else if (i == Hour) // 表示時間が選択時間と同じ場合
+                {
+                    // 選択カーソルを追加（選択済時間表示）
+                    cursol.Add(new object[]
+                    {
+                            a,s,fnt,GetBrush(eBrush.RCELL),GetPen(ePen.RLINE),ClkStr(i)
+                    });
+                }
+                // 時間の描画
+                Gp.FillPie(GetBrush(eBrush.CELL), a.X - s, a.Y - s, s * 2, s * 2, 0, 360);
+                Gp.DrawString(ClkStr(i), fnt, GetBrush(eBrush.BASE), a, Format);
+            }
+            if (obj.Length > 0)
+            {
+                cursol.Add(obj);
+            }
+            return cursol;
+        }
+
+        /// <summary>
+        /// 分入力モード
+        /// </summary>
+        /// <returns></returns>
+        private List<object[]> UpdateMinute()
+        {
+            double rad;
+            Point a;
+            List<object[]> cursol = new List<object[]>();
+
+            for (int i = 0; i < 60; i++)
+            {
+                a = GetArcPos(Rad(i * 6 - 90), ValueRadius);
+                if (i % 5 == 0)
+                {
+                    Gp.DrawString(ClkStr(i), ClkFont, GetBrush(eBrush.BG), a, Format);
+                }
+                if (i == Minute) // 選択カーソルを追加（選択済分表示）
+                {
+                    cursol.Add(new object[]
+                    {
+                            a,ValueSize,ClkFont,GetBrush(eBrush.RCELL),GetPen(ePen.RLINE),ClkStr(i)
+                    });
+
+                }
+            }
+            if (ChkInCircle(Center, BaseRadius)) // マウスカーソルが時計盤の中にあるとき
+            {
+                rad = Math.Atan2(Y - Center.Y, X - Center.X); // 中心座標とマウスカーソルの相対角度を取得
+                a = GetArcPos(rad, ValueRadius);
+                int min = Rad2Minute(rad); // 角度(ラジアン）から分を取得
+                                           // 選択カーソルを追加（マウス追随）
+                cursol.Add(new object[]
+                {
+                        a,ValueSize,ClkFont,GetBrush(eBrush.SCELL),GetPen(ePen.SLINE),ClkStr(min)
+                });
+                // クリックされていたら現在の分を選択する
+                if (Clicked)
+                {
+                    Minute = min;
+                    SetText();
+                }
+            }
+            return cursol;
+        }
+
+        /// <summary>
+        /// カーソル更新処理
+        /// </summary>
+        /// <param name="cursol">カーソルリスト</param>
+        private void UpdateCursol(List<object[]> cursol)
+        {
+            int s;
+            string v;
+            Font fnt;
+            Point a;
+            SolidBrush b;
+            Pen p;
+
+            // 選択カーソル表示
+            foreach (object[] o in cursol)
+            {
+                a = (Point)o[(int)eCursol.Point];
+                s = (int)o[(int)eCursol.Size];
+                b = (SolidBrush)o[(int)eCursol.Brush];
+                p = (Pen)o[(int)eCursol.Pen];
+                fnt = (Font)o[(int)eCursol.Font];
+                v = (string)o[(int)eCursol.Value];
+                Gp.DrawLine(p, Center, a);
+                Gp.FillPie(b, Center.X - CenterRadius, Center.Y - CenterRadius, CenterRadius * 2, CenterRadius * 2, 0, 360);
+                Gp.FillPie(b, a.X - s, a.Y - s, s * 2, s * 2, 0, 360);
+                Gp.DrawString(v, fnt, GetBrush(eBrush.BASE), a, Format);
+            }
+        }
+
+        /// <summary>
+        /// 角度(degree)をラジアンに変換
         /// </summary>
         /// <param name="deg">角度(degree)</param>
         /// <returns>double 角度(radian)</returns>
