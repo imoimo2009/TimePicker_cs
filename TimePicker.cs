@@ -98,18 +98,18 @@ namespace TimePicker
         private const string PensColor_SCLOSE = "#FFDDDD";          // 閉じるボタンマウスオーバーの色(ペン)
 
         // 変数定義
-        private int X, Y;                                            // マウス座標
+        private int X, Y;                                           // マウス座標
         private bool Clicked;                                       // クリックの状態
         private eMode Mode;                                         // 入力モード
         private PointF DrawScale;                                   // 描画スケール
-        private Point Center, CloseBtn;                              // 原点、閉じるボタンの位置
+        private Point Center, CloseBtn;                             // 原点、閉じるボタンの位置
         private Rectangle DigitalRect;                              // デジタル表示部の矩形
         private SolidBrush[] Brushes;                               // ブラシ格納用
         private Pen[] Pens;                                         // ペン格納用
         private Bitmap Bmp;                                         // ビットマップ
         private Graphics Gp;                                        // ビットマップ描画用グラフィックオブジェクト
         private StringFormat Format;                                // 文字列配置指定
-        private Font ClkFont, ClkFont2;                              // 時間表示フォント(外側、内側)
+        private Font ClkFont, ClkFont2;                             // 時間表示フォント(外側、内側)
 
         // プロパティ定義
         public int Hour { get; private set; }                       // 時間
