@@ -255,6 +255,12 @@ namespace TimePicker
             TextChanged += TimePicker_TextChanged;
         }
 
+        /// <summary>
+        /// [イベントハンドラ]
+        /// Textプロパティが変更されたとき
+        /// </summary>
+        /// <param name="sender">イベント元オブジェクト</param>
+        /// <param name="e">イベントパラメータ</param>
         private void TimePicker_TextChanged(object sender, EventArgs e)
         {
             RestoreValues();
@@ -714,6 +720,9 @@ namespace TimePicker
             return c.ToString(ClkFormat);
         }
 
+        /// <summary>
+        /// Textプロパティの値から時間、分の値をセットする
+        /// </summary>
         private void RestoreValues()
         {
             Match m = Regex.Match(Text, "([0-9]+):([0-9]+)");
