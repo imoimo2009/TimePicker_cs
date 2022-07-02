@@ -441,15 +441,14 @@ namespace TimePicker
         /// <returns>List&lt;object[]&gt; カーソルリスト</returns>
         private List<object[]> UpdateHour()
         {
-            int r, s;
-            double rad;
-            Font fnt;
-            Point a;
             List<object[]> cursol = new List<object[]>();
             object[] obj = new object[0];
 
             for (int i = 23; i >= 0; i--)
             {
+                int r, s;
+                Font fnt;
+
                 if ((i < 12) ^ Afternoon)
                 {
                     // 0-11時
@@ -464,8 +463,8 @@ namespace TimePicker
                     s = ValueSize2;
                     fnt = ClkFont2;
                 }
-                rad = Rad((i % 12) * 30 - 90); // 時計盤に表示する時間の角度を取得
-                a = GetArcPos(rad, r); // 時計盤に表示する時間の座標を取得
+                double rad = Rad((i % 12) * 30 - 90); // 時計盤に表示する時間の角度を取得
+                Point a = GetArcPos(rad, r); // 時計盤に表示する時間の座標を取得
                 if (ChkInCircle(a, s)) // 時間表示の円の内側にマウスカーソルがあるとき
                 {
                     // 選択カーソルを追加（マウス追随）
@@ -505,13 +504,11 @@ namespace TimePicker
         /// <returns></returns>
         private List<object[]> UpdateMinute()
         {
-            double rad;
-            Point a;
             List<object[]> cursol = new List<object[]>();
 
             for (int i = 0; i < 60; i++)
             {
-                a = GetArcPos(Rad(i * 6 - 90), ValueRadius);
+                Point a = GetArcPos(Rad(i * 6 - 90), ValueRadius);
                 if (i % 5 == 0)
                 {
                     Gp.DrawString(ClkStr(i), ClkFont, GetBrush(eBrush.BG), a, Format);
@@ -520,20 +517,20 @@ namespace TimePicker
                 {
                     cursol.Add(new object[]
                     {
-                            a,ValueSize,ClkFont,GetBrush(eBrush.RCELL),GetPen(ePen.RLINE),ClkStr(i)
+                        a,ValueSize,ClkFont,GetBrush(eBrush.RCELL),GetPen(ePen.RLINE),ClkStr(i)
                     });
 
                 }
             }
             if (ChkInCircle(Center, BaseRadius)) // マウスカーソルが時計盤の中にあるとき
             {
-                rad = Math.Atan2(Y - Center.Y, X - Center.X); // 中心座標とマウスカーソルの相対角度を取得
-                a = GetArcPos(rad, ValueRadius);
+                double rad = Math.Atan2(Y - Center.Y, X - Center.X); // 中心座標とマウスカーソルの相対角度を取得
+                Point a = GetArcPos(rad, ValueRadius);
                 int min = Rad2Minute(rad); // 角度(ラジアン）から分を取得
                                            // 選択カーソルを追加（マウス追随）
                 cursol.Add(new object[]
                 {
-                        a,ValueSize,ClkFont,GetBrush(eBrush.SCELL),GetPen(ePen.SLINE),ClkStr(min)
+                    a,ValueSize,ClkFont,GetBrush(eBrush.SCELL),GetPen(ePen.SLINE),ClkStr(min)
                 });
                 // クリックされていたら現在の分を選択する
                 if (Clicked)
@@ -551,24 +548,18 @@ namespace TimePicker
         /// <param name="cursol">カーソルリスト</param>
         private void UpdateCursol(List<object[]> cursol)
         {
-            int s;
-            string v;
-            Font fnt;
-            Point a;
-            SolidBrush b;
-            Pen p;
-
-            // 選択カーソル表示
             foreach (object[] o in cursol)
             {
-                a = (Point)o[(int)eCursol.Point];
-                s = (int)o[(int)eCursol.Size];
-                b = (SolidBrush)o[(int)eCursol.Brush];
-                p = (Pen)o[(int)eCursol.Pen];
-                fnt = (Font)o[(int)eCursol.Font];
-                v = (string)o[(int)eCursol.Value];
+                Point a = (Point)o[(int)eCursol.Point];
+                int s = (int)o[(int)eCursol.Size];
+                SolidBrush b = (SolidBrush)o[(int)eCursol.Brush];
+                Pen p = (Pen)o[(int)eCursol.Pen];
+                Font fnt = (Font)o[(int)eCursol.Font];
+                string v = (string)o[(int)eCursol.Value];
+                int c = CenterRadius;
+
                 Gp.DrawLine(p, Center, a);
-                Gp.FillPie(b, Center.X - CenterRadius, Center.Y - CenterRadius, CenterRadius * 2, CenterRadius * 2, 0, 360);
+                Gp.FillPie(b, Center.X - c, Center.Y - c, c * 2, c * 2, 0, 360);
                 Gp.FillPie(b, a.X - s, a.Y - s, s * 2, s * 2, 0, 360);
                 Gp.DrawString(v, fnt, GetBrush(eBrush.BASE), a, Format);
             }
@@ -595,6 +586,7 @@ namespace TimePicker
         private Point GetArcPos(double rad, int r)
         {
             Point p = new Point();
+
             p.X = Convert.ToInt32(Math.Cos(rad) * r + Center.X);
             p.Y = Convert.ToInt32(Math.Sin(rad) * r + Center.Y);
             return p;
@@ -612,6 +604,7 @@ namespace TimePicker
         {
             double xp = Math.Pow(Math.Abs(x2 - x1), 2);
             double yp = Math.Pow(Math.Abs(y2 - y1), 2);
+
             return Math.Sqrt(xp + yp);
         }
 
@@ -623,6 +616,7 @@ namespace TimePicker
         private int Rad2Minute(double rad)
         {
             int m = Convert.ToInt32(rad / (Math.PI * 2) * 60 + 15);
+
             if (m < 0)
             {
                 m += 60;
@@ -641,6 +635,7 @@ namespace TimePicker
         private PointF GetScale(int w1, int h1, int w2, int h2)
         {
             PointF p = new PointF();
+
             p.X = (float)w2 / w1;
             p.Y = (float)h2 / h1;
             return p;
@@ -652,6 +647,7 @@ namespace TimePicker
         private void SetText()
         {
             string str = Hour.ToString(ClkFormat) + ":" + Minute.ToString(ClkFormat);
+
             if (!Text.Equals(str))
             {
                 Text = str;
@@ -676,6 +672,7 @@ namespace TimePicker
         {
             bool rx = X > r.Left && X < r.Right;
             bool ry = Y > r.Top && Y < r.Bottom;
+
             return (rx && ry);
         }
 
@@ -727,6 +724,7 @@ namespace TimePicker
         {
             Match m = Regex.Match(Text, "([0-9]+):([0-9]+)");
             bool ignore = true;
+
             if (m.Success)
             {
                 DateTime buf;
