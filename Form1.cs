@@ -10,8 +10,9 @@ namespace TimePicker
         {
             InitializeComponent();
             Tp = new TimePicker(0, 0, 400, 480);
-            Tp.AutoNext = true;
             Tp.Visible = false;
+            Tp.AutoNext = true;
+            Tp.Afternoon = true;
             Tp.VisibleChanged += Tp_VisibleChanged;
 
             this.ClientSize = Tp.Size;
@@ -33,7 +34,8 @@ namespace TimePicker
 
         private void button1_Click(object sender, System.EventArgs e)
         {
-            Tp.Visible = true;
+            Tp.Text = textBox1.Text;
+            Tp.Open();
         }
     }
 }

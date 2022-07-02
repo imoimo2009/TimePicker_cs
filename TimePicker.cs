@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Drawing;
+using System.Text.RegularExpressions;
 
 namespace TimePicker
 {
@@ -109,13 +110,12 @@ namespace TimePicker
         private Graphics Gp;                                        // ビットマップ描画用グラフィックオブジェクト
         private StringFormat Format;                                // 文字列配置指定
         private Font ClkFont, ClkFont2;                              // 時間表示フォント(外側、内側)
-        private bool Modified;                                      // 項目更新フラグ
 
         // プロパティ定義
         public int Hour { get; set; }                               // 時間
         public int Minute { get; set; }                             // 分
-        public new string Text { get; set; }                        // 時刻文字列
         public bool AutoNext { get; set; }                          // 自動切換モード
+        public bool Afternoon { get; set; }                         // 午後モード
 
         /// <summary>
         /// コンストラクタ
@@ -252,6 +252,12 @@ namespace TimePicker
             MouseMove += TimePicker_MouseMove;
             MouseLeave += TimePicker_MouseLeave;
             VisibleChanged += TimePicker_VisibleChanged;
+            TextChanged += TimePicker_TextChanged;
+        }
+
+        private void TimePicker_TextChanged(object sender, EventArgs e)
+        {
+            RestoreValues();
         }
 
         /// <summary>
@@ -275,8 +281,7 @@ namespace TimePicker
         /// <param name="e">イベントパラメータ</param>
         private void TimePicker_MouseUp(object sender, MouseEventArgs e)
         {
-            Clicked = false;
-            if (AutoNext && Modified && ChkInCircle(Center, BaseRadius))
+            if (Clicked && AutoNext && ChkInCircle(Center, BaseRadius))
             {
                 switch (Mode)
                 {
@@ -289,6 +294,7 @@ namespace TimePicker
                         break;
                 }
             }
+            Clicked = false;
         }
 
         /// <summary>
@@ -324,6 +330,7 @@ namespace TimePicker
                     if (ChkInCircle(Center,BaseRadius))
                     {
                         SetMode((eMode)1 - (int)Mode);
+                        Invalidate();
                     }
                     break;
             }
@@ -348,8 +355,11 @@ namespace TimePicker
         /// <param name="e">イベントパラメータ</param>
         private void TimePicker_VisibleChanged(object sender, EventArgs e)
         {
-            SetMode(eMode.Hour);
-            Invalidate();
+            if (Visible)
+            {
+                SetMode(eMode.Hour);
+                Invalidate();
+            }
         }
 
         /// <summary>
@@ -434,7 +444,7 @@ namespace TimePicker
 
             for (int i = 23; i >= 0; i--)
             {
-                if (i < 12)
+                if ((i < 12) ^ Afternoon)
                 {
                     // 0-11時
                     r = ValueRadius;
@@ -635,8 +645,11 @@ namespace TimePicker
         /// </summary>
         private void SetText()
         {
-            Text = Hour.ToString(ClkFormat) + ":" + Minute.ToString(ClkFormat);
-            Modified = true;
+            string str = Hour.ToString(ClkFormat) + ":" + Minute.ToString(ClkFormat);
+            if (!Text.Equals(str))
+            {
+                Text = str;
+            }
         }
 
         /// <summary>
@@ -646,7 +659,6 @@ namespace TimePicker
         private void SetMode(eMode mode)
         {
             Mode = mode;
-            Modified = false;
         }
 
         /// <summary>
@@ -700,6 +712,27 @@ namespace TimePicker
         private string ClkStr(int c)
         {
             return c.ToString(ClkFormat);
+        }
+
+        private void RestoreValues()
+        {
+            Match m = Regex.Match(Text, "([0-9]+):([0-9]+)");
+            bool ignore = true;
+            if (m.Success)
+            {
+                DateTime buf;
+                if(DateTime.TryParse(Text,out buf))
+                {
+                    Hour = Convert.ToInt32(m.Groups[1].Value);
+                    Minute = Convert.ToInt32(m.Groups[2].Value);
+                    ignore = false;
+                    SetText();
+                }
+            }
+            if (ignore)
+            {
+                Text = "00:00";
+            }
         }
     }
  }
