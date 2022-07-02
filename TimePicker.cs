@@ -112,8 +112,8 @@ namespace TimePicker
         private Font ClkFont, ClkFont2;                              // 時間表示フォント(外側、内側)
 
         // プロパティ定義
-        public int Hour { get; set; }                               // 時間
-        public int Minute { get; set; }                             // 分
+        public int Hour { get; private set; }                       // 時間
+        public int Minute { get; private set; }                     // 分
         public bool AutoNext { get; set; }                          // 自動切換モード
         public bool Afternoon { get; set; }                         // 午後モード
 
