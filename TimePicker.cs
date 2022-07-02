@@ -50,6 +50,7 @@ namespace TimePicker
         // 定数定義
         private const int DefaultWidth = 200;                       // デフォルトの幅
         private const int DefaultHeight = 240;                      // デフォルトの高さ
+        private const string DefaultText = "00:00";                 // デフォルトのTextプロパティの値
         private const int BitmapWidth = 800;                        // ビットマップの幅
         private const int BitmapHeight = 960;                       // ビットマップの高さ
         private const int BGRadius = 32;                            // 背景角丸の半径
@@ -202,7 +203,7 @@ namespace TimePicker
             // プロパティ初期化
             Hour = 0;
             Minute = 0;
-            Text = "";
+            Text = DefaultText;
             // 変数初期化
             X = 0;
             Y = 0;
@@ -738,7 +739,7 @@ namespace TimePicker
             }
             if (ignore)
             {
-                Text = "00:00";
+                Text = DefaultText;
             }
         }
     }
