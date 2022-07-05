@@ -10,6 +10,7 @@ namespace TimePicker
         {
             InitializeComponent();
             Tp = new TimePicker(0, 0, 400, 480);
+            Tp.Caption = "テストですよ";
             Tp.Visible = false;
             Tp.AutoNext = true;
             Tp.Afternoon = true;

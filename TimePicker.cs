@@ -53,36 +53,35 @@ namespace TimePicker
         private const string DefaultText = "00:00";                 // デフォルトのTextプロパティの値
         private const int BitmapWidth = 800;                        // ビットマップの幅
         private const int BitmapHeight = 960;                       // ビットマップの高さ
-        private const int BGRadius = 32;                            // 背景角丸の半径
-        private const int BGLeftTopDeg = 180;                       // 左上の開始角
-        private const int BGRightTopDeg = 270;                      // 右上の開始角
-        private const int BGLeftBottomDeg = 90;                     // 左下の開始角
-        private const int BGRrightBottomDeg = 0;                    // 右下の開始角
-        private const int CloseBtnLeft = BitmapWidth - 37;          // 閉じるボタンの位置X
-        private const int CloseBtnTop = 37;                         // 閉じるボタンの位置Y
-        private const int CloseBtnRadius = 27;                      // 閉じるボタンの半径
-        private const int CloseBtnLine = 15;                        // 閉じるボタンＸの描画開始位置
+        private const int CaptionHeight = 79;                       // キャプションの高さ
+        private const int CaptionStrVOffset = 4;                    // キャプション文字列の垂直オフセット
+        private const int CloseBtnSize = 79;                        // 閉じるボタンのサイズ
+        private const int CloseBtnLeft = BitmapWidth - CloseBtnSize;// 閉じるボタンの位置X
+        private const int CloseBtnTop = 0;                          // 閉じるボタンの位置Y
+        private const float CloseBtnLine = 75F;                     // 閉じるボタンＸの描画開始位置(%)
         private const int CloseBtnLineWidth = 6;                    // 閉じるボタンＸの太さ
         private const int CenterLeft = 400;                         // 時計盤の原点X
-        private const int CenterTop = 560;                          // 時計盤の原点Y
+        private const int CenterTop = 580;                          // 時計盤の原点Y
         private const int CenterRadius = 16;                        // 時計盤中心点の半径
         private const int BaseRadius = 360;                         // 時計盤の半径
         private const int ValueSize = 50;                           // 時間表示のサイズ(外側)
         private const int ValueRadius = 292;                        // 時間表示の原点からの距離(外側)
         private const int ValueSize2 = 44;                          // 時間表示のサイズ(内側)
         private const int ValueRadius2 = 188;                       // 時間表示の原点からの距離(内側)
+        private const string CaptionFontName = "ＭＳ　ゴシック";     // キャプションのフォント名称 
+        private const int CaptionFontSise = 48;                     // キャプションのフォントサイズ
         private const string ClkFontName = "ＭＳ　ゴシック";         // 時間表示のフォント名称 
         private const int ClkFontSise = 48;                         // 時間表示のフォントサイズ(外側)
         private const int ClkFontSise2 = 36;                        // 時間表示のフォントサイズ(内側)
         private const int ClkLineWidth = 8;                         // 時計盤の針の太さ
         private const string ClkFormat = "D2";                      // 時計盤のフォーマット文字列
-        private const int DigitalLeft = 200;                        // デジタル矩形部の位置X
-        private const int DigitalTop = 40;                          // デジタル矩形部の位置Y
-        private const int DigitalWidth = 400;                       // デジタル矩形部の幅
-        private const int DigitalHeight = 144;                      // デジタル矩形部の高さ
-        private const int DigitalDelimiterTop = 104;                // デジタル区切り文字の上端位置
-        private const int DigitalStringTop = 112;                   // デジタル文字列の上端位置
-        private const int DigitalStringOffset = 88;                 // デジタル文字列の中心からの距離
+        private const int DigitalLeft = 220;                        // デジタル矩形部の位置X
+        private const int DigitalTop = 90;                          // デジタル矩形部の位置Y
+        private const int DigitalWidth = 360;                       // デジタル矩形部の幅
+        private const int DigitalHeight = 120;                      // デジタル矩形部の高さ
+        private const int DigitalDlmVOffset = 8;                    // デジタル区切り文字のオフセット
+        private const int DigitalStrVOffset = 8;                    // デジタル文字列の垂直オフセット
+        private const int DigitalStrHOffset = 84;                   // デジタル文字列の水平オフセット
         private const string DigitalDelimiter = ":";                // デジタル文字列の区切り文字
         private const string DigitalFontName = "ＭＳ　ゴシック";     // デジタル表示部のフォント名称
         private const int DigitalFontSise = 80;                     // デジタル表示部のフォントサイズ
@@ -103,20 +102,21 @@ namespace TimePicker
         private bool Clicked;                                       // クリックの状態
         private eMode Mode;                                         // 入力モード
         private PointF DrawScale;                                   // 描画スケール
-        private Point Center, CloseBtn;                             // 原点、閉じるボタンの位置
-        private Rectangle DigitalRect;                              // デジタル表示部の矩形
+        private Point Center;                                       // 原点、閉じるボタンの位置
+        private Rectangle DigitalRect, CaptionRect, CloseBtn;       // 矩形エリア（デジタル部、キャプション、閉じるボタン）
         private SolidBrush[] Brushes;                               // ブラシ格納用
         private Pen[] Pens;                                         // ペン格納用
         private Bitmap Bmp;                                         // ビットマップ
         private Graphics Gp;                                        // ビットマップ描画用グラフィックオブジェクト
         private StringFormat Format;                                // 文字列配置指定
-        private Font ClkFont, ClkFont2;                             // 時間表示フォント(外側、内側)
+        private Font CaptionFont, ClkFont, ClkFont2;                // 時間表示フォント(外側、内側)
 
         // プロパティ定義
         public int Hour { get; private set; }                       // 時間
         public int Minute { get; private set; }                     // 分
         public bool AutoNext { get; set; }                          // 自動切換モード
         public bool Afternoon { get; set; }                         // 午後モード
+        public string Caption { get; set; }                         // キャプション
 
         /// <summary>
         /// コンストラクタ
@@ -204,12 +204,14 @@ namespace TimePicker
             Hour = 0;
             Minute = 0;
             Text = DefaultText;
+            Caption = "";
             // 変数初期化
             X = 0;
             Y = 0;
             Center = new Point(CenterLeft, CenterTop); // 原点
-            DigitalRect = new Rectangle(DigitalLeft, DigitalTop, DigitalWidth, DigitalHeight); //デジタル部矩形
-            CloseBtn = new Point(CloseBtnLeft, CloseBtnTop);
+            CaptionRect = new Rectangle(0, 0, BitmapWidth, CaptionHeight); // キャプション表示部矩形
+            DigitalRect = new Rectangle(DigitalLeft, DigitalTop, DigitalWidth, DigitalHeight); // デジタル部矩形
+            CloseBtn = new Rectangle(CloseBtnLeft, CloseBtnTop,CloseBtnSize,CloseBtnSize); // 閉じるボタンの矩形
             Brushes = new SolidBrush[] // ブラシをあらかじめ作成しておく
             {
                 new SolidBrush(ColorTranslator.FromHtml(BrushesColor_BG)),
@@ -236,6 +238,7 @@ namespace TimePicker
             Format = new StringFormat(); // DrawStringに指定する文字配置
             Format.Alignment = StringAlignment.Center;
             Format.LineAlignment = StringAlignment.Center;
+            CaptionFont = new Font(CaptionFontName, CaptionFontSise, FontStyle.Bold); // キャプション用フォント
             ClkFont = new Font(ClkFontName, ClkFontSise, FontStyle.Bold); // 時計盤用フォント（外側）
             ClkFont2 = new Font(ClkFontName, ClkFontSise2, FontStyle.Regular); // 時計盤用フォント（内側）
             DrawScale = GetScale(width, height, BitmapWidth, BitmapHeight); // UIとビットマップの拡大率
@@ -328,7 +331,7 @@ namespace TimePicker
                         }
                     }
                     Invalidate();
-                    if (ChkInCircle(CloseBtn,CloseBtnRadius))
+                    if (ChkInRect(CloseBtn))
                     {
                         Close();
                     }
@@ -379,22 +382,22 @@ namespace TimePicker
         {
             // 変数定義
             int r;
-            Point a;
+            Rectangle t;
             SolidBrush b,bh,bm;
             Pen p;
             List<object[]> cursol;
 
             // 背景
-            b = GetBrush(eBrush.BG);
-            r = BGRadius;
-            Gp.FillRectangle(b, 0, r, Bmp.Width, Bmp.Height - r * 2);
-            Gp.FillRectangle(b, r, 0, Bmp.Width - r * 2, Bmp.Height);
-            Gp.FillPie(b, 0, 0, r * 2, r * 2, BGLeftTopDeg, 90);
-            Gp.FillPie(b, Bmp.Width - r * 2, 0, r * 2, r * 2, BGRightTopDeg, 90);
-            Gp.FillPie(b, 0, Bmp.Height - r * 2, r * 2, r * 2, BGLeftBottomDeg, 90);
-            Gp.FillPie(b, Bmp.Width - r * 2, Bmp.Height - r * 2, r * 2, r * 2, BGRrightBottomDeg, 90);
+            Gp.FillRectangle(GetBrush(eBrush.BG), 0, 0, Bmp.Width, Bmp.Height);
+            // キャプション
+            if(!Caption.Equals(""))
+            {
+                Gp.FillRectangle(GetBrush(eBrush.CELL),CaptionRect);
+                r = CaptionHeight / 2 + CaptionStrVOffset;
+                Gp.DrawString(Caption, CaptionFont, GetBrush(eBrush.SCELL), Center.X, r, Format);
+            }
             // 閉じるボタン
-            if (ChkInCircle(CloseBtn, CloseBtnRadius))
+            if (ChkInRect(CloseBtn))
             {
                 b = GetBrush(eBrush.SCLOSE);
                 p = GetPen(ePen.SCLOSE);
@@ -404,12 +407,11 @@ namespace TimePicker
                 b = GetBrush(eBrush.CLOSE);
                 p = GetPen(ePen.CLOSE);
             }
-            a = CloseBtn;
-            r = CloseBtnRadius;
-            Gp.FillPie(b, a.X - r, a.Y - r, r * 2, r * 2, 0, 360);
-            r = CloseBtnLine;
-            Gp.DrawLine(p, a.X - r, a.Y - r, a.X + r, a.Y + r);
-            Gp.DrawLine(p, a.X - r, a.Y + r, a.X + r, a.Y - r);
+            t = CloseBtn;
+            r = Convert.ToInt32(CloseBtnLine / 100 * CloseBtnSize);
+            Gp.FillRectangle(b, t);
+            Gp.DrawLine(p, t.Left + r, t.Top + r, t.Left + t.Width - r, t.Top + t.Height - r);
+            Gp.DrawLine(p, t.Left + r, t.Top + t.Height - r, t.Left + t.Width - r, t.Top + r);
             // アナログ部
             r = BaseRadius;
             Gp.FillPie(GetBrush(eBrush.BASE), Center.X - r, Center.Y - r, r * 2, r * 2, 0, 360);
@@ -429,10 +431,11 @@ namespace TimePicker
             }
             UpdateCursol(cursol);
             // デジタル部
+            r = DigitalRect.Top + DigitalRect.Height / 2 + DigitalStrVOffset;
             Gp.FillRectangle(GetBrush(eBrush.BASE), DigitalRect);
-            Gp.DrawString(ClkStr(Hour), Font, bh, Center.X - DigitalStringOffset, DigitalStringTop, Format);
-            Gp.DrawString(DigitalDelimiter, Font, GetBrush(eBrush.CELL), Center.X, DigitalDelimiterTop, Format);
-            Gp.DrawString(ClkStr(Minute), Font, bm, Center.X + DigitalStringOffset, DigitalStringTop, Format);
+            Gp.DrawString(ClkStr(Hour), Font, bh, Center.X - DigitalStrHOffset, r, Format);
+            Gp.DrawString(DigitalDelimiter, Font, GetBrush(eBrush.CELL), Center.X, r - DigitalDlmVOffset, Format);
+            Gp.DrawString(ClkStr(Minute), Font, bm, Center.X + DigitalStrHOffset, r, Format);
             Image = Bmp;
         }
 
