@@ -354,6 +354,10 @@ namespace TimePicker
         /// <param name="e">イベントパラメータ</param>
         private void TimePicker_MouseLeave(object sender, EventArgs e)
         {
+            // 保持しているマウス情報をクリア
+            X = 0;
+            Y = 0;
+            Clicked = false;
             Invalidate();
         }
 
