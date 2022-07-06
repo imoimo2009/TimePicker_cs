@@ -503,6 +503,10 @@ namespace TimePicker
             {
                 cursol.Add(obj);
             }
+            else
+            {
+                Clicked = false;
+            }
             return cursol;
         }
 
