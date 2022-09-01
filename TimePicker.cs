@@ -9,10 +9,12 @@ namespace TimePicker
     class TimePicker : PictureBox
     {
         // 時間・分モード切替用列挙体
-        enum eMode
+        public enum Mode
         {
-            Hour,       // 時間入力モード
-            Minute      // 分入力モード
+            Hour = 0,       // 時間入力モード
+            Minute = 1,     // 分入力モード
+            Morning = 2,    // 午前表示モード
+            Afternoon = 4   // 午後表示モード
         }
 
         // ブラシインデックスの列挙体
@@ -100,7 +102,8 @@ namespace TimePicker
         // 変数定義
         private int X, Y;                                           // マウス座標
         private bool Clicked;                                       // クリックの状態
-        private eMode Mode;                                         // 入力モード
+        private Mode InputMode;                                         // 入力モード
+        private bool Afternoon;                                     // 午後モード
         private PointF DrawScale;                                   // 描画スケール
         private Point Center;                                       // 原点、閉じるボタンの位置
         private Rectangle DigitalRect, CaptionRect, CloseBtn;       // 矩形エリア（デジタル部、キャプション、閉じるボタン）
@@ -115,7 +118,6 @@ namespace TimePicker
         public int Hour { get; private set; }                       // 時間
         public int Minute { get; private set; }                     // 分
         public bool AutoNext { get; set; }                          // 自動切換モード
-        public bool Afternoon { get; set; }                         // 午後モード
         public string Caption { get; set; }                         // キャプション
 
         /// <summary>
@@ -178,11 +180,30 @@ namespace TimePicker
         }
 
         /// <summary>
+        /// TimePickerを開く
+        /// </summary>
+        public void Open(Mode mode)
+        {
+            Visible = true;
+            SetMode(mode);
+        }
+
+        /// <summary>
         /// TimePickerを閉じる
         /// </summary>
         public void Close()
         {
             Visible = false;
+        }
+
+        /// <summary>
+        /// モード切替
+        /// </summary>
+        /// <param name="mode">入力モード</param>
+        public void SetMode(Mode mode)
+        {
+            InputMode = (Mode)((int)mode & (int)Mode.Minute);
+            Afternoon = (((int)mode & (int)Mode.Afternoon) == (int)Mode.Afternoon);
         }
 
         /// <summary>
@@ -242,7 +263,7 @@ namespace TimePicker
             ClkFont = new Font(ClkFontName, ClkFontSise, FontStyle.Bold); // 時計盤用フォント（外側）
             ClkFont2 = new Font(ClkFontName, ClkFontSise2, FontStyle.Regular); // 時計盤用フォント（内側）
             DrawScale = GetScale(width, height, BitmapWidth, BitmapHeight); // UIとビットマップの拡大率
-            Mode = eMode.Hour; // 時間入力モードに設定
+            InputMode = Mode.Hour; // 時間入力モードに設定
             // PictureBox初期化
             Size = new Size(width, height);
             BorderStyle = BorderStyle.None;
@@ -293,13 +314,13 @@ namespace TimePicker
         {
             if (Clicked && AutoNext && ChkInCircle(Center, BaseRadius))
             {
-                switch (Mode)
+                switch (InputMode)
                 {
-                    case eMode.Hour:
-                        SetMode(eMode.Minute);
+                    case Mode.Hour:
+                        InputMode = Mode.Minute;
                         Invalidate();
                         break;
-                    case eMode.Minute:
+                    case Mode.Minute:
                         Close();
                         break;
                 }
@@ -323,11 +344,11 @@ namespace TimePicker
                     {
                         if (X < Center.X)
                         {
-                            SetMode(eMode.Hour);
+                            InputMode = Mode.Hour;
                         }
                         else
                         {
-                            SetMode(eMode.Minute);
+                            InputMode = Mode.Minute;
                         }
                     }
                     Invalidate();
@@ -339,7 +360,7 @@ namespace TimePicker
                 case MouseButtons.Right:
                     if (ChkInCircle(Center,BaseRadius))
                     {
-                        SetMode((eMode)1 - (int)Mode);
+                        InputMode = (Mode)(1 - (int)InputMode);
                         Invalidate();
                     }
                     break;
@@ -371,7 +392,7 @@ namespace TimePicker
         {
             if (Visible)
             {
-                SetMode(eMode.Hour);
+                InputMode = Mode.Hour;
                 Invalidate();
             }
         }
@@ -419,7 +440,7 @@ namespace TimePicker
             // アナログ部
             r = BaseRadius;
             Gp.FillPie(GetBrush(eBrush.BASE), Center.X - r, Center.Y - r, r * 2, r * 2, 0, 360);
-            if (Mode == eMode.Hour)
+            if (InputMode == Mode.Hour)
             {
                 cursol = UpdateHour();
                 // デジタル切り替え用ブラシを設定
@@ -664,15 +685,6 @@ namespace TimePicker
             {
                 Text = str;
             }
-        }
-
-        /// <summary>
-        /// モード切替
-        /// </summary>
-        /// <param name="mode">入力モード</param>
-        private void SetMode(eMode mode)
-        {
-            Mode = mode;
         }
 
         /// <summary>

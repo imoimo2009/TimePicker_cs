@@ -13,7 +13,6 @@ namespace TimePicker
             Tp.Caption = "テストですよ";
             Tp.Visible = false;
             Tp.AutoNext = true;
-            Tp.Afternoon = true;
             Tp.VisibleChanged += Tp_VisibleChanged;
 
             this.ClientSize = Tp.Size;
@@ -36,7 +35,7 @@ namespace TimePicker
         private void button1_Click(object sender, System.EventArgs e)
         {
             Tp.Text = textBox1.Text;
-            Tp.Open();
+            Tp.Open(TimePicker.Mode.Afternoon | TimePicker.Mode.Minute);
         }
     }
 }
