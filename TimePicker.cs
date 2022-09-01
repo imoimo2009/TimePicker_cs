@@ -202,8 +202,8 @@ namespace TimePicker
         /// <param name="mode">入力モード</param>
         public void SetMode(Mode mode)
         {
-            InputMode = (Mode)((int)mode & (int)Mode.Minute);
-            Afternoon = (((int)mode & (int)Mode.Afternoon) == (int)Mode.Afternoon);
+            InputMode = mode & Mode.Minute;
+            Afternoon = (mode & Mode.Afternoon) == Mode.Afternoon;
         }
 
         /// <summary>
